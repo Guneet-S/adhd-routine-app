@@ -5,6 +5,8 @@ export interface Task {
   completed: boolean;
   category: 'morning' | 'evening' | 'study';
   order: number;
+  reminderTime?: string; // 'HH:MM'
+  notes?: string;
 }
 
 export const MOCK_TASKS: Task[] = [

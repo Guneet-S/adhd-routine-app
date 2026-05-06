@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import EmojiPicker from './EmojiPicker';
 import Button from '@/components/ui/Button';
 import { Task } from '@/lib/mockData';
+import { useLanguage } from '@/context/LanguageContext';
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -12,26 +13,35 @@ interface AddTaskModalProps {
   onAdd: (task: Omit<Task, 'id' | 'completed' | 'order'>) => void;
 }
 
-const CATEGORIES = [
-  { value: 'morning' as const, label: 'Morning Routine', emoji: '☀️', time: '6:30 - 8:30', bg: 'bg-morning-accent' },
-  { value: 'evening' as const, label: 'Evening Routine', emoji: '🌙', time: '6:00 - 8:30', bg: 'bg-evening-accent' },
-  { value: 'study' as const, label: 'Study Time', emoji: '📖', time: '3:30 - 5:00', bg: 'bg-study-accent' },
-];
-
 export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalProps) {
+  const { t } = useLanguage();
   const [title, setTitle] = useState('');
   const [emoji, setEmoji] = useState('⭐');
   const [category, setCategory] = useState<'morning' | 'evening' | 'study'>('morning');
   const [reminder, setReminder] = useState(false);
+  const [reminderTime, setReminderTime] = useState('07:00');
   const [notes, setNotes] = useState('');
+
+  const CATEGORIES = [
+    { value: 'morning' as const, label: t('routine_morning'), emoji: '☀️', time: '6:30 - 8:30', bg: 'bg-morning-accent' },
+    { value: 'evening' as const, label: t('routine_evening'), emoji: '🌙', time: '6:00 - 8:30', bg: 'bg-evening-accent' },
+    { value: 'study' as const, label: t('routine_study'), emoji: '📖', time: '3:30 - 5:00', bg: 'bg-study-accent' },
+  ];
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    onAdd({ title: title.trim(), emoji, category });
+    onAdd({
+      title: title.trim(),
+      emoji,
+      category,
+      reminderTime: reminder ? reminderTime : undefined,
+      notes: notes.trim() || undefined,
+    });
     setTitle('');
     setEmoji('⭐');
     setCategory('morning');
     setReminder(false);
+    setReminderTime('07:00');
     setNotes('');
     onClose();
   };
@@ -64,7 +74,7 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
 
             {/* Header */}
             <div className="flex items-center justify-between px-5 pb-3">
-              <h2 className="text-lg font-bold text-slate-700">✨ Add New Task</h2>
+              <h2 className="text-lg font-bold text-slate-700">Add New Task</h2>
               <button
                 onClick={onClose}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"
@@ -130,20 +140,47 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }: AddTaskModalPro
               {/* 4. Reminder */}
               <div>
                 <label className="text-sm font-bold text-slate-600 mb-2 block">4. Reminder (Optional)</label>
-                <div className="flex items-center justify-between bg-slate-50 rounded-2xl p-3.5 border border-slate-200">
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <span>🔔</span>
-                    <span className="text-sm font-medium">Set reminder time</span>
+                <div className="bg-slate-50 rounded-2xl p-3.5 border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-slate-600 min-w-0">
+                      <span className="shrink-0">🔔</span>
+                      <span className="text-sm font-medium truncate">Set reminder time</span>
+                    </div>
+                    {/* Toggle — shrink-0 + overflow-hidden prevent layout breaks */}
+                    <button
+                      type="button"
+                      onClick={() => setReminder((r) => !r)}
+                      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 overflow-hidden ml-3 ${
+                        reminder ? 'bg-primary' : 'bg-slate-200'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                          reminder ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setReminder((r) => !r)}
-                    className={`relative w-11 h-6 rounded-full transition-colors ${reminder ? 'bg-primary' : 'bg-slate-200'}`}
-                  >
-                    <span
-                      className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${reminder ? 'translate-x-5' : 'translate-x-0.5'}`}
-                    />
-                  </button>
+
+                  {/* Time picker — shown only when toggle is on */}
+                  <AnimatePresence>
+                    {reminder && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <input
+                          type="time"
+                          value={reminderTime}
+                          onChange={(e) => setReminderTime(e.target.value)}
+                          className="w-full mt-3 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 

@@ -42,7 +42,7 @@ export default function RoutinePage() {
     loadTasks();
   }, [loadTasks]);
 
-  const addTask = async (newTask: { title: string; emoji: string; category: Task['category'] }) => {
+  const addTask = async (newTask: { title: string; emoji: string; category: Task['category']; reminderTime?: string; notes?: string }) => {
     if (!user) return;
     const order = tasks.filter((task) => task.category === newTask.category).length + 1;
     const fsTask = { ...newTask, order, completedDate: null };
@@ -56,6 +56,8 @@ export default function RoutinePage() {
       title: updated.title,
       emoji: updated.emoji,
       category: updated.category,
+      reminderTime: updated.reminderTime,
+      notes: updated.notes,
     });
     setTasks((prev) => prev.map((task) => (task.id === updated.id ? updated : task)));
   };

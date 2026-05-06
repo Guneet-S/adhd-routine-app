@@ -61,7 +61,7 @@ export default function DashboardPage() {
     setProfile(updatedProfile);
   };
 
-  const handleAddTask = async (newTask: { title: string; emoji: string; category: Task['category'] }) => {
+  const handleAddTask = async (newTask: { title: string; emoji: string; category: Task['category']; reminderTime?: string; notes?: string }) => {
     if (!user) return;
     const order = tasks.filter((t) => t.category === newTask.category).length + 1;
     const fsTask = { ...newTask, order, completedDate: null };
@@ -131,6 +131,12 @@ export default function DashboardPage() {
         <div className="mx-4 pb-28">
           {loadingTasks ? (
             <div className="flex justify-center py-12 text-3xl animate-pulse">⭐</div>
+          ) : tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="text-5xl mb-4">📋</div>
+              <p className="text-sm font-bold text-slate-600 mb-1">No tasks yet!</p>
+              <p className="text-xs text-slate-400">Tap + below to add your first task</p>
+            </div>
           ) : (
             (['morning', 'study', 'evening'] as const).map((cat, i) => {
               const config = CATEGORY_CONFIG[cat];

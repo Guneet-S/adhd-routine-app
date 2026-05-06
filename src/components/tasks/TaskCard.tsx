@@ -23,14 +23,22 @@ export default function TaskCard({ task, iconBg, onToggle }: TaskCardProps) {
         {task.emoji}
       </div>
 
-      {/* Task name */}
-      <span
-        className={`flex-1 text-sm font-semibold transition-colors ${
-          task.completed ? 'line-through text-slate-400' : 'text-slate-700'
-        }`}
-      >
-        {task.title}
-      </span>
+      {/* Task name + reminder */}
+      <div className="flex-1 min-w-0">
+        <span
+          className={`block text-sm font-semibold transition-colors ${
+            task.completed ? 'line-through text-slate-400' : 'text-slate-700'
+          }`}
+        >
+          {task.title}
+        </span>
+        {task.reminderTime && (
+          <span className="text-[10px] text-slate-400 font-medium">🔔 {task.reminderTime}</span>
+        )}
+        {task.notes && (
+          <span className="text-[10px] text-slate-400 block truncate">{task.notes}</span>
+        )}
+      </div>
 
       {/* Checkbox */}
       <Checkbox

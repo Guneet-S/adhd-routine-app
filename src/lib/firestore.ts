@@ -20,6 +20,8 @@ export interface Task {
   category: 'morning' | 'evening' | 'study';
   order: number;
   completedDate: string | null; // 'YYYY-MM-DD' or null
+  reminderTime?: string; // 'HH:MM'
+  notes?: string;
 }
 
 export interface UserProfile {
@@ -91,7 +93,16 @@ export async function createUserProfile(
 export async function createDefaultTasks(uid: string, childAge: number) {
   let tasks: Array<Omit<Task, 'id'>> = [];
 
-  if (childAge >= 3 && childAge <= 5) {
+  if (childAge <= 2) {
+    tasks = [
+      { title: 'Wash Hands', emoji: '🙌', category: 'morning', order: 1, completedDate: null },
+      { title: 'Drink Water', emoji: '💧', category: 'morning', order: 2, completedDate: null },
+      { title: 'Wear Clothes', emoji: '👕', category: 'morning', order: 3, completedDate: null },
+      { title: 'Drink Milk', emoji: '🥛', category: 'morning', order: 4, completedDate: null },
+      { title: 'Rest Time', emoji: '😴', category: 'evening', order: 1, completedDate: null },
+      { title: 'Story Time', emoji: '📖', category: 'evening', order: 2, completedDate: null },
+    ];
+  } else if (childAge >= 3 && childAge <= 5) {
     tasks = [
       { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
       { title: 'Wash Face', emoji: '🚿', category: 'morning', order: 2, completedDate: null },
