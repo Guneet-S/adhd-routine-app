@@ -1,21 +1,57 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from 'firebase/auth';
+import { auth } from '@/firebase';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleEmailLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.replace('/dashboard');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? friendlyError(err.message) : 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    setError('');
+    setLoading(true);
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+      router.replace('/dashboard');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? friendlyError(err.message) : 'Google login failed');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-violet-100 to-violet-50 flex flex-col">
       <div className="max-w-sm mx-auto w-full flex flex-col min-h-screen">
         {/* Top section */}
         <div className="flex flex-col items-center pt-12 pb-6 px-6">
-          {/* App icon */}
           <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center text-3xl mb-4">
             📅⭐
           </div>
@@ -43,7 +79,13 @@ export default function LoginPage() {
           <h2 className="text-xl font-extrabold text-slate-700 mb-1">Login</h2>
           <p className="text-xs text-slate-400 mb-5">Sign in to manage your child&apos;s routine</p>
 
-          <div className="space-y-3">
+          {error && (
+            <div className="mb-4 px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-xs text-red-500 font-medium">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleEmailLogin} className="space-y-3">
             {/* Email */}
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">✉️</span>
@@ -51,7 +93,8 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email or mobile"
+                placeholder="Email"
+                required
                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -64,6 +107,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
+                required
                 className="w-full pl-11 pr-11 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
@@ -77,33 +121,40 @@ export default function LoginPage() {
 
             {/* Forgot password */}
             <div className="text-right">
-              <button className="text-xs font-semibold text-primary">Forgot password?</button>
+              <button type="button" className="text-xs font-semibold text-primary">
+                Forgot password?
+              </button>
             </div>
 
             {/* Login button */}
             <motion.button
+              type="submit"
+              disabled={loading}
               whileTap={{ scale: 0.97 }}
-              className="w-full bg-primary text-white font-bold text-base rounded-full py-4 shadow-md shadow-primary/20"
+              className="w-full bg-primary text-white font-bold text-base rounded-full py-4 shadow-md shadow-primary/20 disabled:opacity-60"
             >
-              Login
+              {loading ? 'Signing in...' : 'Login'}
             </motion.button>
+          </form>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 py-1">
-              <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs text-slate-400 font-medium">Or</span>
-              <div className="flex-1 h-px bg-slate-200" />
-            </div>
-
-            {/* Google */}
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3.5 shadow-sm flex items-center justify-center gap-2"
-            >
-              <span className="text-lg">🌐</span>
-              Continue with Google
-            </motion.button>
+          {/* Divider */}
+          <div className="flex items-center gap-3 py-3">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs text-slate-400 font-medium">Or</span>
+            <div className="flex-1 h-px bg-slate-200" />
           </div>
+
+          {/* Google */}
+          <motion.button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            whileTap={{ scale: 0.97 }}
+            className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3.5 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            <span className="text-lg">🌐</span>
+            Continue with Google
+          </motion.button>
 
           {/* Sign up link */}
           <p className="text-center text-sm text-slate-400 mt-5">
@@ -138,4 +189,17 @@ export default function LoginPage() {
       </div>
     </main>
   );
+}
+
+function friendlyError(msg: string): string {
+  if (msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
+    return 'Incorrect email or password.';
+  }
+  if (msg.includes('too-many-requests')) {
+    return 'Too many attempts. Please try again later.';
+  }
+  if (msg.includes('network')) {
+    return 'Network error. Check your connection.';
+  }
+  return 'Login failed. Please try again.';
 }

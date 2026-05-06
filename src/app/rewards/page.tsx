@@ -6,6 +6,7 @@ import { useState } from 'react';
 import AddTaskModal from '@/components/modals/AddTaskModal';
 import { Task } from '@/lib/mockData';
 import Link from 'next/link';
+import AuthGuard from '@/components/auth/AuthGuard';
 
 const BADGES = [
   { emoji: '🌟', title: 'First Task', desc: 'Completed your first task', earned: true },
@@ -22,6 +23,7 @@ export default function RewardsPage() {
   const handleAdd = (_task: Omit<Task, 'id' | 'completed' | 'order'>) => {};
 
   return (
+    <AuthGuard>
     <div className="min-h-screen bg-slate-50">
       <div className="bg-white px-4 pt-5 pb-3 flex items-center gap-3">
         <Link href="/dashboard" className="text-slate-400 text-lg">←</Link>
@@ -93,5 +95,6 @@ export default function RewardsPage() {
       <BottomNav onAddTask={() => setAddOpen(true)} />
       <AddTaskModal isOpen={addOpen} onClose={() => setAddOpen(false)} onAdd={handleAdd} />
     </div>
+    </AuthGuard>
   );
 }
