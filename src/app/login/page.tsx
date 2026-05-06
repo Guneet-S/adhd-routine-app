@@ -11,6 +11,7 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '@/firebase';
+import GoogleIcon from '@/components/icons/GoogleIcon';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +29,8 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.replace('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? friendlyError(err.message) : 'Login failed');
+      const code = (err as { code?: string })?.code ?? '';
+      setError(friendlyError(code));
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,8 @@ export default function LoginPage() {
       await signInWithPopup(auth, new GoogleAuthProvider());
       router.replace('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? friendlyError(err.message) : 'Google login failed');
+      const code = (err as { code?: string })?.code ?? '';
+      setError(friendlyError(code));
     } finally {
       setLoading(false);
     }
@@ -52,8 +55,8 @@ export default function LoginPage() {
       <div className="max-w-sm mx-auto w-full flex flex-col min-h-screen">
         {/* Top section */}
         <div className="flex flex-col items-center pt-12 pb-6 px-6">
-          <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center text-3xl mb-4">
-            📅⭐
+          <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center mb-4 overflow-hidden">
+            <Image src="/gps_logo.png" alt="App" width={48} height={48} className="rounded-xl" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-700 mb-1">Swaagat Hai! ❤️</h1>
           <p className="text-sm font-bold text-primary mb-1">ADHD Routine App</p>
@@ -86,7 +89,6 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleEmailLogin} className="space-y-3">
-            {/* Email */}
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">✉️</span>
               <input
@@ -99,7 +101,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔒</span>
               <input
@@ -119,14 +120,12 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Forgot password */}
             <div className="text-right">
               <button type="button" className="text-xs font-semibold text-primary">
                 Forgot password?
               </button>
             </div>
 
-            {/* Login button */}
             <motion.button
               type="submit"
               disabled={loading}
@@ -137,14 +136,12 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-3 py-3">
             <div className="flex-1 h-px bg-slate-200" />
             <span className="text-xs text-slate-400 font-medium">Or</span>
             <div className="flex-1 h-px bg-slate-200" />
           </div>
 
-          {/* Google */}
           <motion.button
             type="button"
             onClick={handleGoogleLogin}
@@ -152,11 +149,10 @@ export default function LoginPage() {
             whileTap={{ scale: 0.97 }}
             className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3.5 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            <span className="text-lg">🌐</span>
+            <GoogleIcon size={20} />
             Continue with Google
           </motion.button>
 
-          {/* Sign up link */}
           <p className="text-center text-sm text-slate-400 mt-5">
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-primary font-bold">
@@ -164,7 +160,6 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          {/* Feature row */}
           <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100">
             {[
               { icon: '📋', title: 'Daily Routine', desc: 'Manage easily' },
@@ -181,9 +176,8 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* GPS logo */}
-          <div className="flex justify-center mt-4 opacity-40">
-            <Image src="/gps_logo.png" alt="GPS" width={18} height={18} className="rounded" />
+          <div className="flex justify-center mt-4">
+            <Image src="/gps_logo.png" alt="GPS" width={18} height={18} className="rounded opacity-40" />
           </div>
         </motion.div>
       </div>
@@ -191,15 +185,14 @@ export default function LoginPage() {
   );
 }
 
-function friendlyError(msg: string): string {
-  if (msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
+function friendlyError(code: string): string {
+  if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential')) {
     return 'Incorrect email or password.';
   }
-  if (msg.includes('too-many-requests')) {
-    return 'Too many attempts. Please try again later.';
-  }
-  if (msg.includes('network')) {
-    return 'Network error. Check your connection.';
-  }
+  if (code.includes('too-many-requests')) return 'Too many attempts. Please try again later.';
+  if (code.includes('network-request-failed')) return 'Network error. Check your connection.';
+  if (code.includes('unauthorized-domain')) return 'Login blocked: this domain is not authorized in Firebase. Add it to Firebase Console > Authentication > Authorized Domains.';
+  if (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request')) return '';
+  if (code.includes('operation-not-allowed')) return 'This login method is not enabled. Please enable it in Firebase Console.';
   return 'Login failed. Please try again.';
 }

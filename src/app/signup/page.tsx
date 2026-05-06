@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   createUserWithEmailAndPassword,
@@ -11,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/firebase';
 import { createUserProfile } from '@/lib/firestore';
+import GoogleIcon from '@/components/icons/GoogleIcon';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -26,15 +28,21 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
     try {
+      // Step 1: Create Firebase Auth user
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await createUserProfile(cred.user.uid, {
-        parentName: name,
-        childName,
-        email,
-      });
+
+      // Step 2: Save profile to Firestore (non-blocking — don't fail auth if this fails)
+      try {
+        await createUserProfile(cred.user.uid, { parentName: name, childName, email });
+      } catch {
+        // Profile save failed (likely Firestore rules) — auth still succeeded, continue
+        console.warn('Profile save failed — Firestore rules may need updating');
+      }
+
       router.replace('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? friendlyError(err.message) : 'Signup failed');
+      const code = (err as { code?: string })?.code ?? '';
+      setError(friendlyError(code));
     } finally {
       setLoading(false);
     }
@@ -45,15 +53,21 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const cred = await signInWithPopup(auth, new GoogleAuthProvider());
-      // Create profile if new user (Google sign-in doesn't capture child name)
-      await createUserProfile(cred.user.uid, {
-        parentName: cred.user.displayName || '',
-        childName: '',
-        email: cred.user.email || '',
-      });
+
+      try {
+        await createUserProfile(cred.user.uid, {
+          parentName: cred.user.displayName || '',
+          childName: '',
+          email: cred.user.email || '',
+        });
+      } catch {
+        console.warn('Profile save failed — Firestore rules may need updating');
+      }
+
       router.replace('/dashboard');
     } catch (err: unknown) {
-      setError(err instanceof Error ? friendlyError(err.message) : 'Google signup failed');
+      const code = (err as { code?: string })?.code ?? '';
+      setError(friendlyError(code));
     } finally {
       setLoading(false);
     }
@@ -64,8 +78,8 @@ export default function SignupPage() {
       <div className="max-w-sm mx-auto w-full flex flex-col min-h-screen">
         {/* Top */}
         <div className="flex flex-col items-center pt-10 pb-4 px-6">
-          <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center text-3xl mb-3">
-            📅⭐
+          <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center mb-3 overflow-hidden">
+            <Image src="/gps_logo.png" alt="App" width={48} height={48} className="rounded-xl" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-700 mb-1">Create Account</h1>
           <p className="text-xs text-slate-500 text-center">Set up your family&apos;s routine app</p>
@@ -160,7 +174,7 @@ export default function SignupPage() {
             whileTap={{ scale: 0.97 }}
             className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3.5 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            <span className="text-lg">🌐</span>
+            <GoogleIcon size={20} />
             Continue with Google
           </motion.button>
 
@@ -170,16 +184,23 @@ export default function SignupPage() {
               Login
             </Link>
           </p>
+
+          <div className="flex justify-center mt-6 pt-4 border-t border-slate-100">
+            <Image src="/gps_logo.png" alt="GPS" width={18} height={18} className="rounded opacity-40" />
+          </div>
         </motion.div>
       </div>
     </main>
   );
 }
 
-function friendlyError(msg: string): string {
-  if (msg.includes('email-already-in-use')) return 'An account with this email already exists.';
-  if (msg.includes('weak-password')) return 'Password must be at least 6 characters.';
-  if (msg.includes('invalid-email')) return 'Please enter a valid email address.';
-  if (msg.includes('network')) return 'Network error. Check your connection.';
-  return 'Signup failed. Please try again.';
+function friendlyError(code: string): string {
+  if (code.includes('email-already-in-use')) return 'An account with this email already exists.';
+  if (code.includes('weak-password')) return 'Password must be at least 6 characters.';
+  if (code.includes('invalid-email')) return 'Please enter a valid email address.';
+  if (code.includes('network-request-failed')) return 'Network error. Check your connection.';
+  if (code.includes('unauthorized-domain')) return 'Signup blocked: this domain is not authorized in Firebase. Add it to Firebase Console > Authentication > Authorized Domains.';
+  if (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request')) return '';
+  if (code.includes('operation-not-allowed')) return 'Email/password signup is not enabled. Please enable it in Firebase Console > Authentication > Sign-in methods.';
+  return `Signup failed (${code || 'unknown error'}). Please try again.`;
 }
