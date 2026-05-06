@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Noto+Sans+Gurmukhi:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #7C3AED;
+  --color-primary-light: #EDE9FE;
+  --color-primary-dark: #5B21B6;
+  --color-morning: #FFFBEB;
+  --color-morning-accent: #FEF3C7;
+  --color-evening: #EDE9FE;
+  --color-evening-accent: #DDD6FE;
+  --color-study: #DBEAFE;
+  --color-study-accent: #BFDBFE;
+  --font-nunito: 'Nunito', 'Noto Sans Gurmukhi', sans-serif;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-family: 'Nunito', 'Noto Sans Gurmukhi', sans-serif;
+}
+
+body {
+  background: #ffffff;
+  color: #334155;
+  font-family: 'Nunito', 'Noto Sans Gurmukhi', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Safe area for bottom nav */
+.pb-safe {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
