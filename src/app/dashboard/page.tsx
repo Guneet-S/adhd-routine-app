@@ -11,6 +11,7 @@ import TaskCategorySection from '@/components/tasks/TaskCategorySection';
 import AddTaskModal from '@/components/modals/AddTaskModal';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/context/AuthContext';
+import { useLanguage } from '@/context/LanguageContext';
 import {
   getTasks,
   addTask as fsAddTask,
@@ -24,6 +25,7 @@ import { CATEGORY_CONFIG } from '@/lib/mockData';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -47,7 +49,6 @@ export default function DashboardPage() {
 
   const handleToggle = async (id: string, completed: boolean) => {
     if (!user) return;
-    // Optimistic update
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
@@ -56,7 +57,6 @@ export default function DashboardPage() {
       )
     );
     await toggleTaskCompletion(user.uid, id, completed);
-    // Reload profile for updated streak
     const updatedProfile = await getUserProfile(user.uid);
     setProfile(updatedProfile);
   };
@@ -69,12 +69,11 @@ export default function DashboardPage() {
     setTasks((prev) => [...prev, { ...fsTask, id }]);
   };
 
-  const completedTasks = tasks.filter(isCompletedToday);
-  const completedCount = completedTasks.length;
+  const completedCount = tasks.filter(isCompletedToday).length;
   const totalCount = tasks.length;
   const starsToday = completedCount;
   const streak = profile?.streak ?? 0;
-  const childName = profile?.childName || 'ਤੁਸੀਂ';
+  const childName = profile?.childName || '';
 
   const tasksByCategory = (cat: Task['category']) =>
     tasks.filter((t) => t.category === cat).sort((a, b) => a.order - b.order);
@@ -82,7 +81,7 @@ export default function DashboardPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-50">
-        <Header />
+        <Header childName={childName} />
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -92,10 +91,10 @@ export default function DashboardPage() {
         >
           <div className="flex-1">
             <p className="text-sm font-bold text-slate-700 leading-snug">
-              Keep going, {childName}! ☀️
+              {t('dashboard_cheer')}{childName ? `, ${childName}` : ''}! ☀️
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
-              You&apos;re doing amazing today. Every task counts!
+              {t('dashboard_amazing')}
             </p>
           </div>
           <div className="text-4xl">🏔️🌈</div>
@@ -110,20 +109,20 @@ export default function DashboardPage() {
           <StatsCard
             icon={<ProgressRing value={completedCount} max={totalCount || 1} size={48} />}
             value=""
-            label="Done"
+            label={t('dashboard_done')}
           />
-          <StatsCard icon="⭐" value={starsToday} label="Stars Today" />
-          <StatsCard icon="🔥" value={streak} label="Streak Days" />
+          <StatsCard icon="⭐" value={starsToday} label={t('dashboard_stars_today')} />
+          <StatsCard icon="🔥" value={streak} label={t('dashboard_streak')} />
           <StatsCard
             icon="🏆"
             value=""
-            label="Rewards"
+            label={t('dashboard_rewards')}
             action={
               <button
                 onClick={() => router.push('/rewards')}
                 className="text-[9px] font-bold text-primary border border-primary rounded-full px-2 py-0.5"
               >
-                View
+                {t('view')}
               </button>
             }
           />
@@ -131,7 +130,7 @@ export default function DashboardPage() {
 
         <div className="mx-4 pb-28">
           {loadingTasks ? (
-            <div className="flex justify-center py-12 text-3xl animate-pulse">📋</div>
+            <div className="flex justify-center py-12 text-3xl animate-pulse">⭐</div>
           ) : (
             (['morning', 'study', 'evening'] as const).map((cat, i) => {
               const config = CATEGORY_CONFIG[cat];

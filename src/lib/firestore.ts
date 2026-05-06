@@ -7,6 +7,7 @@ import {
   deleteDoc,
   setDoc,
   getDoc,
+  increment,
   query,
   orderBy,
 } from 'firebase/firestore';
@@ -24,9 +25,14 @@ export interface Task {
 export interface UserProfile {
   parentName: string;
   childName: string;
+  childAge: number;
   email: string;
   streak: number;
   lastActiveDate: string | null; // 'YYYY-MM-DD'
+  totalStars: number;
+  wakeUpTime: string; // 'HH:MM'
+  schoolDays: boolean[]; // [Mon, Tue, Wed, Thu, Fri]
+  language: string;
 }
 
 function today(): string {
@@ -43,15 +49,83 @@ function yesterday(): string {
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
   const snap = await getDoc(doc(db, 'users', uid));
-  return snap.exists() ? (snap.data() as UserProfile) : null;
+  if (!snap.exists()) return null;
+  const data = snap.data() as Partial<UserProfile>;
+  // Provide defaults for fields added after initial release
+  return {
+    parentName: data.parentName ?? '',
+    childName: data.childName ?? '',
+    childAge: data.childAge ?? 0,
+    email: data.email ?? '',
+    streak: data.streak ?? 0,
+    lastActiveDate: data.lastActiveDate ?? null,
+    totalStars: data.totalStars ?? 0,
+    wakeUpTime: data.wakeUpTime ?? '07:00',
+    schoolDays: data.schoolDays ?? [true, true, true, true, true],
+    language: data.language ?? 'english',
+  };
 }
 
-export async function createUserProfile(uid: string, profile: Omit<UserProfile, 'streak' | 'lastActiveDate'>) {
+export async function createUserProfile(
+  uid: string,
+  profile: {
+    parentName: string;
+    childName: string;
+    childAge: number;
+    email: string;
+    wakeUpTime: string;
+    schoolDays: boolean[];
+    language: string;
+  }
+) {
   await setDoc(doc(db, 'users', uid), {
     ...profile,
     streak: 0,
     lastActiveDate: null,
+    totalStars: 0,
   });
+}
+
+// ---- Default Tasks ----
+
+export async function createDefaultTasks(uid: string, childAge: number) {
+  let tasks: Array<Omit<Task, 'id'>> = [];
+
+  if (childAge >= 3 && childAge <= 5) {
+    tasks = [
+      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
+      { title: 'Wash Face', emoji: '🚿', category: 'morning', order: 2, completedDate: null },
+      { title: 'Drink Milk', emoji: '🥛', category: 'morning', order: 3, completedDate: null },
+      { title: 'Wear Clothes', emoji: '👕', category: 'morning', order: 4, completedDate: null },
+    ];
+  } else if (childAge >= 6 && childAge <= 9) {
+    tasks = [
+      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
+      { title: 'Pack School Bag', emoji: '🎒', category: 'morning', order: 2, completedDate: null },
+      { title: 'Homework', emoji: '📚', category: 'study', order: 1, completedDate: null },
+      { title: 'Reading', emoji: '📖', category: 'study', order: 2, completedDate: null },
+      { title: 'Sleep on Time', emoji: '😴', category: 'evening', order: 1, completedDate: null },
+    ];
+  } else if (childAge >= 10 && childAge <= 13) {
+    tasks = [
+      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
+      { title: 'Pack School Bag', emoji: '🎒', category: 'morning', order: 2, completedDate: null },
+      { title: 'Revision', emoji: '📝', category: 'study', order: 1, completedDate: null },
+      { title: 'Journaling', emoji: '📓', category: 'study', order: 2, completedDate: null },
+      { title: 'Sleep Preparation', emoji: '😴', category: 'evening', order: 1, completedDate: null },
+    ];
+  } else {
+    // Age 14+ or unknown: basic set
+    tasks = [
+      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
+      { title: 'Revision', emoji: '📝', category: 'study', order: 1, completedDate: null },
+      { title: 'Sleep on Time', emoji: '😴', category: 'evening', order: 1, completedDate: null },
+    ];
+  }
+
+  for (const task of tasks) {
+    await addTask(uid, task);
+  }
 }
 
 // ---- Tasks ----
@@ -87,6 +161,8 @@ export async function toggleTaskCompletion(uid: string, taskId: string, complete
 
   if (completed) {
     await updateStreak(uid);
+    // Increment total stars earned
+    await updateDoc(doc(db, 'users', uid), { totalStars: increment(1) });
   }
 }
 

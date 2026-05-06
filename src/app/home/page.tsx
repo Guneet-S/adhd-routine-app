@@ -1,7 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function LandingPage() {
+  const { t } = useLanguage();
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-violet-50 to-white flex flex-col">
       <div className="max-w-sm mx-auto w-full flex flex-col min-h-screen px-6">
@@ -23,11 +28,11 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-3xl font-extrabold text-slate-700 leading-tight mb-3">
-            Swaagat Hai! ❤️
+            {t('home_welcome')}
           </h1>
-          <p className="text-base font-semibold text-primary mb-2">ADHD Routine App</p>
+          <p className="text-base font-semibold text-primary mb-2">{t('app_name')}</p>
           <p className="text-sm text-slate-500 mb-10 leading-relaxed">
-            Help your child build consistent daily routines — calm, simple, and rewarding.
+            {t('home_help_text')}
           </p>
 
           {/* CTAs */}
@@ -36,22 +41,22 @@ export default function LandingPage() {
               href="/login"
               className="block w-full text-center bg-primary text-white font-bold text-base rounded-full py-4 shadow-lg shadow-primary/25 hover:bg-primary-dark transition"
             >
-              Login
+              {t('login')}
             </Link>
             <Link
               href="/signup"
               className="block w-full text-center bg-white text-primary font-bold text-base rounded-full py-4 border-2 border-primary hover:bg-violet-50 transition"
             >
-              Create Account
+              {t('create_account')}
             </Link>
           </div>
 
           {/* Feature icons */}
           <div className="flex gap-4 mt-10 w-full justify-around">
             {[
-              { icon: '📋', title: 'Daily Routine', desc: 'Manage easily' },
-              { icon: '⭐', title: 'Build Habits', desc: 'Stay consistent' },
-              { icon: '📊', title: 'Track Progress', desc: 'See growth' },
+              { icon: '📋', title: t('home_feature_routine'), desc: t('home_feature_routine_desc') },
+              { icon: '⭐', title: t('home_feature_habits'), desc: t('home_feature_habits_desc') },
+              { icon: '📊', title: t('home_feature_progress'), desc: t('home_feature_progress_desc') },
             ].map((f) => (
               <div key={f.title} className="flex flex-col items-center gap-1">
                 <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-xl">

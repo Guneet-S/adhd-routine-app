@@ -3,22 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-
-interface NavItem {
-  href: string;
-  icon: string;
-  label: string;
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', icon: '🏠', label: 'Home' },
-  { href: '/routine', icon: '📅', label: 'Routine' },
-];
-
-const NAV_ITEMS_RIGHT: NavItem[] = [
-  { href: '/rewards', icon: '⭐', label: 'Rewards' },
-  { href: '/more', icon: '•••', label: 'More' },
-];
+import { useLanguage } from '@/context/LanguageContext';
 
 interface BottomNavProps {
   onAddTask?: () => void;
@@ -26,12 +11,23 @@ interface BottomNavProps {
 
 export default function BottomNav({ onAddTask }: BottomNavProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const NAV_LEFT = [
+    { href: '/dashboard', icon: '🏠', label: t('nav_home') },
+    { href: '/routine', icon: '📋', label: t('nav_routine') },
+  ];
+
+  const NAV_RIGHT = [
+    { href: '/rewards', icon: '⭐', label: t('nav_rewards') },
+    { href: '/more', icon: '•••', label: t('nav_more') },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] z-40">
       <div className="max-w-sm mx-auto flex items-center justify-around px-2 h-16 relative">
         {/* Left items */}
-        {NAV_ITEMS.map((item) => {
+        {NAV_LEFT.map((item) => {
           const active = pathname === item.href;
           return (
             <Link
@@ -62,7 +58,7 @@ export default function BottomNav({ onAddTask }: BottomNavProps) {
         <div className="w-14" />
 
         {/* Right items */}
-        {NAV_ITEMS_RIGHT.map((item) => {
+        {NAV_RIGHT.map((item) => {
           const active = pathname === item.href;
           return (
             <Link

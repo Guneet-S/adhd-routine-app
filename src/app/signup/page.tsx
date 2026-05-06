@@ -11,32 +11,51 @@ import {
   GoogleAuthProvider,
 } from 'firebase/auth';
 import { auth } from '@/firebase';
-import { createUserProfile } from '@/lib/firestore';
+import { createUserProfile, createDefaultTasks } from '@/lib/firestore';
 import GoogleIcon from '@/components/icons/GoogleIcon';
+import { useLanguage } from '@/context/LanguageContext';
+
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as const;
 
 export default function SignupPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [childName, setChildName] = useState('');
+  const [childAge, setChildAge] = useState('');
+  const [wakeUpTime, setWakeUpTime] = useState('07:00');
+  const [schoolDays, setSchoolDays] = useState([true, true, true, true, true]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  function toggleDay(i: number) {
+    setSchoolDays((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
+  }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      // Step 1: Create Firebase Auth user
       const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Step 2: Save profile to Firestore (non-blocking — don't fail auth if this fails)
+      const age = parseInt(childAge, 10) || 0;
       try {
-        await createUserProfile(cred.user.uid, { parentName: name, childName, email });
+        await createUserProfile(cred.user.uid, {
+          parentName: name,
+          childName,
+          childAge: age,
+          email,
+          wakeUpTime,
+          schoolDays,
+          language,
+        });
+        await createDefaultTasks(cred.user.uid, age);
       } catch {
-        // Profile save failed (likely Firestore rules) — auth still succeeded, continue
-        console.warn('Profile save failed — Firestore rules may need updating');
+        console.warn('Profile/tasks save failed — Firestore rules may need updating');
       }
 
       router.replace('/dashboard');
@@ -58,7 +77,11 @@ export default function SignupPage() {
         await createUserProfile(cred.user.uid, {
           parentName: cred.user.displayName || '',
           childName: '',
+          childAge: 0,
           email: cred.user.email || '',
+          wakeUpTime: '07:00',
+          schoolDays: [true, true, true, true, true],
+          language,
         });
       } catch {
         console.warn('Profile save failed — Firestore rules may need updating');
@@ -81,8 +104,8 @@ export default function SignupPage() {
           <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center mb-3 overflow-hidden">
             <Image src="/gps_logo.png" alt="App" width={48} height={48} className="rounded-xl" />
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-700 mb-1">Create Account</h1>
-          <p className="text-xs text-slate-500 text-center">Set up your family&apos;s routine app</p>
+          <h1 className="text-2xl font-extrabold text-slate-700 mb-1">{t('signup_title')}</h1>
+          <p className="text-xs text-slate-500 text-center">{t('signup_subtitle')}</p>
         </div>
 
         {/* Form card */}
@@ -92,8 +115,8 @@ export default function SignupPage() {
           transition={{ duration: 0.4, ease: 'easeOut' }}
           className="flex-1 bg-white rounded-t-3xl px-6 pt-6 pb-8 shadow-xl"
         >
-          <h2 className="text-xl font-extrabold text-slate-700 mb-1">Sign Up</h2>
-          <p className="text-xs text-slate-400 mb-5">Fill in your details to get started</p>
+          <h2 className="text-xl font-extrabold text-slate-700 mb-1">{t('signup_form_title')}</h2>
+          <p className="text-xs text-slate-400 mb-5">{t('signup_form_subtitle')}</p>
 
           {error && (
             <div className="mb-4 px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-xs text-red-500 font-medium">
@@ -102,49 +125,101 @@ export default function SignupPage() {
           )}
 
           <form onSubmit={handleSignup} className="space-y-3">
+            {/* Parent name */}
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">👤</span>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Parent name"
+                placeholder={t('parent_name')}
                 required
                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
+            {/* Child name */}
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🧒</span>
               <input
                 type="text"
                 value={childName}
                 onChange={(e) => setChildName(e.target.value)}
-                placeholder="Child's name"
+                placeholder={t('child_name')}
                 required
                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
+            {/* Child age */}
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🎂</span>
+              <input
+                type="number"
+                value={childAge}
+                onChange={(e) => setChildAge(e.target.value)}
+                placeholder={t('child_age')}
+                required
+                min={1}
+                max={18}
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            {/* Wake-up time */}
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">⏰</span>
+              <input
+                type="time"
+                value={wakeUpTime}
+                onChange={(e) => setWakeUpTime(e.target.value)}
+                required
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+
+            {/* School days */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold text-slate-500 mb-2">{t('school_days')}</p>
+              <div className="flex gap-2">
+                {DAYS.map((day, i) => (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => toggleDay(i)}
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition ${
+                      schoolDays[i]
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {t(day)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Email */}
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">✉️</span>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
+                placeholder={t('email')}
                 required
                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
+            {/* Password */}
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔒</span>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create password (min 6 chars)"
+                placeholder={t('signup_create_password')}
                 required
                 minLength={6}
                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
@@ -157,7 +232,7 @@ export default function SignupPage() {
               whileTap={{ scale: 0.97 }}
               className="w-full bg-primary text-white font-bold text-base rounded-full py-4 shadow-md shadow-primary/20 disabled:opacity-60"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? t('creating_account') : t('create_account')}
             </motion.button>
           </form>
 
@@ -175,13 +250,13 @@ export default function SignupPage() {
             className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3.5 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <GoogleIcon size={20} />
-            Continue with Google
+            {t('continue_google')}
           </motion.button>
 
           <p className="text-center text-sm text-slate-400 mt-5">
-            Already have an account?{' '}
+            {t('already_have_account')}{' '}
             <Link href="/login" className="text-primary font-bold">
-              Login
+              {t('login')}
             </Link>
           </p>
 

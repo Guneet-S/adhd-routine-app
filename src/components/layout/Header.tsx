@@ -1,11 +1,14 @@
 'use client';
 
+import { useLanguage } from '@/context/LanguageContext';
+
 interface HeaderProps {
   childName?: string;
-  greeting?: string;
 }
 
-export default function Header({ childName = 'Arjan', greeting = 'Sat Sri Akal!' }: HeaderProps) {
+export default function Header({ childName }: HeaderProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="flex items-center justify-between px-4 pt-5 pb-3 bg-white">
       {/* Left: avatar + greeting */}
@@ -14,11 +17,11 @@ export default function Header({ childName = 'Arjan', greeting = 'Sat Sri Akal!'
           🧒
         </div>
         <div>
-          <p className="text-xs text-slate-500 font-medium">{greeting}</p>
+          <p className="text-xs text-slate-500 font-medium">{t('header_greeting')}</p>
           <p className="text-base font-bold text-slate-700">
-            {childName} <span>⭐</span>
+            {childName || '...'} <span>⭐</span>
           </p>
-          <p className="text-xs text-slate-400">Let&apos;s have a great day!</p>
+          <p className="text-xs text-slate-400">{t('header_tagline')}</p>
         </div>
       </div>
 

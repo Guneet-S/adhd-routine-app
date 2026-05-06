@@ -12,9 +12,11 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/firebase';
 import GoogleIcon from '@/components/icons/GoogleIcon';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -58,11 +60,9 @@ export default function LoginPage() {
           <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center mb-4 overflow-hidden">
             <Image src="/gps_logo.png" alt="App" width={48} height={48} className="rounded-xl" />
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-700 mb-1">Swaagat Hai! ❤️</h1>
-          <p className="text-sm font-bold text-primary mb-1">ADHD Routine App</p>
-          <p className="text-xs text-slate-500 text-center">
-            Building better habits, one day at a time
-          </p>
+          <h1 className="text-2xl font-extrabold text-slate-700 mb-1">{t('home_welcome')}</h1>
+          <p className="text-sm font-bold text-primary mb-1">{t('app_name')}</p>
+          <p className="text-xs text-slate-500 text-center">{t('app_tagline')}</p>
         </div>
 
         {/* Illustration */}
@@ -79,8 +79,8 @@ export default function LoginPage() {
           transition={{ duration: 0.4, ease: 'easeOut' }}
           className="flex-1 bg-white rounded-t-3xl px-6 pt-6 pb-8 shadow-xl"
         >
-          <h2 className="text-xl font-extrabold text-slate-700 mb-1">Login</h2>
-          <p className="text-xs text-slate-400 mb-5">Sign in to manage your child&apos;s routine</p>
+          <h2 className="text-xl font-extrabold text-slate-700 mb-1">{t('login')}</h2>
+          <p className="text-xs text-slate-400 mb-5">{t('login_subtitle')}</p>
 
           {error && (
             <div className="mb-4 px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-xs text-red-500 font-medium">
@@ -95,7 +95,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email"
+                placeholder={t('email')}
                 required
                 className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
@@ -107,7 +107,7 @@ export default function LoginPage() {
                 type={showPass ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
+                placeholder={t('password')}
                 required
                 className="w-full pl-11 pr-11 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
@@ -122,7 +122,7 @@ export default function LoginPage() {
 
             <div className="text-right">
               <button type="button" className="text-xs font-semibold text-primary">
-                Forgot password?
+                {t('forgot_password')}
               </button>
             </div>
 
@@ -132,7 +132,7 @@ export default function LoginPage() {
               whileTap={{ scale: 0.97 }}
               className="w-full bg-primary text-white font-bold text-base rounded-full py-4 shadow-md shadow-primary/20 disabled:opacity-60"
             >
-              {loading ? 'Signing in...' : 'Login'}
+              {loading ? t('signing_in') : t('login')}
             </motion.button>
           </form>
 
@@ -150,21 +150,21 @@ export default function LoginPage() {
             className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3.5 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <GoogleIcon size={20} />
-            Continue with Google
+            {t('continue_google')}
           </motion.button>
 
           <p className="text-center text-sm text-slate-400 mt-5">
-            Don&apos;t have an account?{' '}
+            {t('no_account')}{' '}
             <Link href="/signup" className="text-primary font-bold">
-              Sign Up
+              {t('sign_up')}
             </Link>
           </p>
 
           <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100">
             {[
-              { icon: '📋', title: 'Daily Routine', desc: 'Manage easily' },
-              { icon: '⭐', title: 'Build Habits', desc: 'Stay consistent' },
-              { icon: '📊', title: 'Track Progress', desc: 'See growth' },
+              { icon: '📋', title: t('home_feature_routine'), desc: t('home_feature_routine_desc') },
+              { icon: '⭐', title: t('home_feature_habits'), desc: t('home_feature_habits_desc') },
+              { icon: '📊', title: t('home_feature_progress'), desc: t('home_feature_progress_desc') },
             ].map((f) => (
               <div key={f.title} className="flex-1 flex flex-col items-center gap-0.5">
                 <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-lg">

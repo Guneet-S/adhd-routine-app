@@ -17,7 +17,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-violet-50">
-        <div className="text-4xl animate-pulse">📅</div>
+        <div className="text-4xl animate-pulse">⭐</div>
       </div>
     );
   }

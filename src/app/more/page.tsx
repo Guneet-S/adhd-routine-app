@@ -8,10 +8,14 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import BottomNav from '@/components/layout/BottomNav';
 import { useState } from 'react';
 import AddTaskModal from '@/components/modals/AddTaskModal';
-import { Task } from '@/lib/mockData';
+import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { addTask as fsAddTask, getTasks, Task } from '@/lib/firestore';
 
 export default function MorePage() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const { user } = useAuth();
   const [addOpen, setAddOpen] = useState(false);
 
   async function handleSignOut() {
@@ -19,13 +23,18 @@ export default function MorePage() {
     router.replace('/login');
   }
 
-  const handleAdd = (_task: Omit<Task, 'id' | 'completed' | 'order'>) => {};
+  const handleAdd = async (newTask: { title: string; emoji: string; category: Task['category'] }) => {
+    if (!user) return;
+    const existing = await getTasks(user.uid);
+    const order = existing.filter((t) => t.category === newTask.category).length + 1;
+    await fsAddTask(user.uid, { ...newTask, order, completedDate: null });
+  };
 
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-50">
         <div className="bg-white px-4 pt-5 pb-3">
-          <h1 className="text-lg font-extrabold text-slate-700">More</h1>
+          <h1 className="text-lg font-extrabold text-slate-700">{t('more_title')}</h1>
         </div>
 
         <div className="px-4 pt-6 pb-28 space-y-3">
@@ -34,7 +43,7 @@ export default function MorePage() {
             className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-slate-100"
           >
             <span className="text-xl">📋</span>
-            <span className="text-sm font-semibold text-slate-700">Routine Builder</span>
+            <span className="text-sm font-semibold text-slate-700">{t('more_routine_builder')}</span>
             <span className="ml-auto text-slate-400">→</span>
           </Link>
 
@@ -43,7 +52,7 @@ export default function MorePage() {
             className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-slate-100"
           >
             <span className="text-xl">🏆</span>
-            <span className="text-sm font-semibold text-slate-700">Rewards</span>
+            <span className="text-sm font-semibold text-slate-700">{t('rewards_title')}</span>
             <span className="ml-auto text-slate-400">→</span>
           </Link>
 
@@ -52,7 +61,7 @@ export default function MorePage() {
             className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-red-100 text-red-500"
           >
             <span className="text-xl">🚪</span>
-            <span className="text-sm font-semibold">Sign Out</span>
+            <span className="text-sm font-semibold">{t('sign_out')}</span>
           </button>
         </div>
 
