@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import BottomNav from '@/components/layout/BottomNav';
@@ -99,6 +99,38 @@ export default function DashboardPage() {
 
   const tip = language === 'punjabi' ? TIPS_PA[tipIndex] : TIPS_EN[tipIndex];
 
+  // Focus Mode — Fix 8
+  const [focusMode, setFocusMode] = useState(false);
+  const [focusTasks, setFocusTasks] = useState<Task[]>([]);
+  const [focusIdx, setFocusIdx] = useState(0);
+  const [celebrating, setCelebrating] = useState(false);
+  const [allFocusDone, setAllFocusDone] = useState(false);
+
+  function openFocusMode() {
+    const incomplete = tasks.filter((t) => !isCompletedToday(t));
+    if (incomplete.length === 0) return;
+    setFocusTasks(incomplete);
+    setFocusIdx(0);
+    setAllFocusDone(false);
+    setFocusMode(true);
+  }
+
+  async function handleFocusDone() {
+    const task = focusTasks[focusIdx];
+    if (!task || !user) return;
+    setCelebrating(true);
+    await handleToggle(task.id, true);
+    setTimeout(() => {
+      setCelebrating(false);
+      const next = focusIdx + 1;
+      if (next < focusTasks.length) {
+        setFocusIdx(next);
+      } else {
+        setAllFocusDone(true);
+      }
+    }, 1200);
+  }
+
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-50">
@@ -143,6 +175,30 @@ export default function DashboardPage() {
                   💡 {tip}
                 </p>
               </motion.div>
+
+              {/* Focus Mode trigger — Fix 8 */}
+              {incompleteTasks.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.11 }}
+                  className="mx-4 mb-3"
+                >
+                  <button
+                    onClick={openFocusMode}
+                    className="w-full flex items-center justify-between bg-violet-600 text-white rounded-2xl px-4 py-3 shadow-sm shadow-violet-200"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🎯</span>
+                      <div className="text-left">
+                        <p className="text-sm font-bold">Focus Mode</p>
+                        <p className="text-[10px] text-violet-200">One task at a time</p>
+                      </div>
+                    </div>
+                    <span className="text-violet-200 text-lg">→</span>
+                  </button>
+                </motion.div>
+              )}
 
               {/* Up Next — Fix 9 Section 3 */}
               {nextTask && (
@@ -244,6 +300,106 @@ export default function DashboardPage() {
           onClose={() => setModalOpen(false)}
           onAdd={handleAddTask}
         />
+
+        {/* Focus Mode overlay — Fix 8 */}
+        <AnimatePresence>
+          {focusMode && (
+            <motion.div
+              key="focus-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-violet-700 flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 pt-10 pb-4">
+                <p className="text-violet-200 text-xs font-bold uppercase tracking-wide">Focus Mode</p>
+                <button
+                  onClick={() => setFocusMode(false)}
+                  className="w-8 h-8 rounded-full bg-violet-600 flex items-center justify-center text-violet-200 text-lg font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Task counter */}
+              {!allFocusDone && (
+                <p className="text-center text-violet-300 text-xs mb-2">
+                  {focusIdx + 1} of {focusTasks.length}
+                </p>
+              )}
+
+              {/* Main content */}
+              <div className="flex-1 flex flex-col items-center justify-center px-8">
+                <AnimatePresence mode="wait">
+                  {allFocusDone ? (
+                    <motion.div
+                      key="all-done"
+                      initial={{ scale: 0.7, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="text-center"
+                    >
+                      <div className="text-8xl mb-6">🏆</div>
+                      <p className="text-2xl font-extrabold text-white mb-2">All done!</p>
+                      <p className="text-violet-200 text-sm mb-8">Amazing work today.</p>
+                      <button
+                        onClick={() => setFocusMode(false)}
+                        className="bg-white text-violet-700 font-bold text-base rounded-2xl px-8 py-3"
+                      >
+                        Back to Dashboard
+                      </button>
+                    </motion.div>
+                  ) : celebrating ? (
+                    <motion.div
+                      key="celebrate"
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1.1, opacity: 1 }}
+                      exit={{ scale: 1.3, opacity: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="text-center"
+                    >
+                      <div className="text-8xl mb-4">⭐</div>
+                      <p className="text-2xl font-extrabold text-white">Amazing!</p>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key={focusTasks[focusIdx]?.id}
+                      initial={{ x: 60, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      exit={{ x: -60, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="text-center w-full"
+                    >
+                      <div className="text-8xl mb-6">{focusTasks[focusIdx]?.emoji}</div>
+                      <p className="text-2xl font-extrabold text-white mb-2">
+                        {focusTasks[focusIdx]?.title}
+                      </p>
+                      <p className="text-violet-300 text-xs mb-10 capitalize">
+                        {focusTasks[focusIdx]?.category === 'study' ? 'Afternoon' : focusTasks[focusIdx]?.category} routine
+                      </p>
+                      <button
+                        onClick={handleFocusDone}
+                        className="w-full bg-white text-violet-700 font-extrabold text-lg rounded-2xl py-4 shadow-lg"
+                      >
+                        Done
+                      </button>
+                      <button
+                        onClick={() => {
+                          const next = focusIdx + 1;
+                          if (next < focusTasks.length) setFocusIdx(next);
+                          else setAllFocusDone(true);
+                        }}
+                        className="mt-3 text-violet-300 text-sm font-medium"
+                      >
+                        Skip this task
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AuthGuard>
   );

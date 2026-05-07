@@ -16,6 +16,8 @@ import {
   updateTask as fsUpdateTask,
   deleteTask as fsDeleteTask,
   isCompletedToday,
+  autoGenerateRoutine,
+  getUserProfile,
   Task as FsTask,
 } from '@/lib/firestore';
 import { Task, CATEGORY_CONFIG } from '@/lib/mockData';
@@ -32,6 +34,7 @@ export default function RoutinePage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
+  const [autoGenerating, setAutoGenerating] = useState(false);
 
   const loadTasks = useCallback(async () => {
     if (!user) return;
@@ -43,6 +46,16 @@ export default function RoutinePage() {
   useEffect(() => {
     loadTasks();
   }, [loadTasks]);
+
+  async function handleAutoGenerate() {
+    if (!user) return;
+    setAutoGenerating(true);
+    const profile = await getUserProfile(user.uid);
+    const age = profile?.childAge ?? 6;
+    await autoGenerateRoutine(user.uid, age);
+    await loadTasks();
+    setAutoGenerating(false);
+  }
 
   const addTask = async (newTask: { title: string; emoji: string; category: Task['category']; reminderTime?: string; notes?: string }) => {
     if (!user) return;
@@ -86,12 +99,42 @@ export default function RoutinePage() {
           >
             <ChevronLeft size={18} />
           </button>
-          <h1 className="text-lg font-extrabold text-slate-700">{t('routine_title')}</h1>
+          <h1 className="text-lg font-extrabold text-slate-700 flex-1">{t('routine_title')}</h1>
+          {/* Fix 7 — Auto Generate button in header */}
+          <button
+            onClick={handleAutoGenerate}
+            disabled={autoGenerating}
+            className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full shrink-0 disabled:opacity-60"
+          >
+            {autoGenerating ? 'Generating...' : 'Auto Generate'}
+          </button>
         </header>
 
         <div className="px-4 pb-28 pt-4 space-y-6">
           {loading ? (
             <div className="flex justify-center py-12 text-3xl animate-pulse">⭐</div>
+          ) : tasks.length === 0 ? (
+            /* Fix 6 — Warm empty state */
+            <div className="flex flex-col items-center justify-center py-16 text-center bg-violet-50 rounded-3xl mx-0">
+              <div className="text-6xl mb-4">🌟</div>
+              <p className="text-base font-extrabold text-slate-700 mb-1">Let&apos;s build today&apos;s calm routine</p>
+              <p className="text-xs text-slate-400 mb-6 px-6">Add tasks one by one or let us generate a full routine for your child.</p>
+              <div className="flex flex-col gap-3 w-full px-8">
+                <button
+                  onClick={() => setAddOpen(true)}
+                  className="w-full py-3 rounded-2xl bg-primary text-white font-bold text-sm shadow-sm"
+                >
+                  Add Task
+                </button>
+                <button
+                  onClick={handleAutoGenerate}
+                  disabled={autoGenerating}
+                  className="w-full py-3 rounded-2xl border-2 border-primary text-primary font-bold text-sm disabled:opacity-60"
+                >
+                  {autoGenerating ? 'Generating...' : 'Auto Generate Routine'}
+                </button>
+              </div>
+            </div>
           ) : (
             (['morning', 'study', 'evening'] as const).map((cat) => {
               const config = CATEGORY_CONFIG[cat];
@@ -135,11 +178,11 @@ export default function RoutinePage() {
                           </button>
                         </motion.div>
                       ))}
-                    </div>
 
-                    {catTasks.length === 0 && (
-                      <p className="text-xs text-slate-400 text-center py-3">{t('routine_no_tasks')}</p>
-                    )}
+                      {catTasks.length === 0 && (
+                        <p className="text-xs text-slate-400 text-center py-3">{t('routine_no_tasks')}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
