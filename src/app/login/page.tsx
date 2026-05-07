@@ -55,35 +55,37 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-violet-100 to-violet-50 flex flex-col">
       <div className="max-w-sm mx-auto w-full flex flex-col min-h-screen">
-        {/* Top section */}
-        <div className="flex flex-col items-center pt-12 pb-6 px-6">
-          <div className="w-16 h-16 rounded-2xl bg-white shadow-md flex items-center justify-center mb-4 overflow-hidden">
-            <Image src="/gps_logo.png" alt="App" width={48} height={48} className="rounded-xl" />
+
+        {/* Top — compact: logo + headline + subheadline */}
+        <div className="flex flex-col items-center pt-8 pb-3 px-6">
+          <div className="w-14 h-14 rounded-2xl bg-white shadow-md flex items-center justify-center mb-3 overflow-hidden">
+            <Image src="/gps_logo.png" alt="App" width={44} height={44} className="rounded-xl" />
           </div>
-          <h1 className="text-2xl font-extrabold text-slate-700 mb-1">{t('home_welcome')}</h1>
-          <p className="text-sm font-bold text-primary mb-1">{t('app_name')}</p>
-          <p className="text-xs text-slate-500 text-center">{t('app_tagline')}</p>
+          <h1 className="text-xl font-extrabold text-slate-700 text-center mb-1">
+            {t('login_headline')}
+          </h1>
+          <p className="text-xs text-slate-500 text-center">{t('login_subheadline')}</p>
         </div>
 
-        {/* Illustration */}
-        <div className="flex justify-center mb-4">
-          <div className="w-40 h-32 bg-violet-100 rounded-3xl flex items-center justify-center text-7xl">
+        {/* Small illustration — reduced to not waste space */}
+        <div className="flex justify-center mb-3">
+          <div className="w-24 h-20 bg-violet-100 rounded-2xl flex items-center justify-center text-5xl">
             👩‍👦
           </div>
         </div>
 
         {/* Login card */}
         <motion.div
-          initial={{ y: 40, opacity: 0 }}
+          initial={{ y: 30, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4, ease: 'easeOut' }}
-          className="flex-1 bg-white rounded-t-3xl px-6 pt-6 pb-8 shadow-xl"
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="flex-1 bg-white rounded-t-3xl px-6 pt-5 pb-8 shadow-xl"
         >
-          <h2 className="text-xl font-extrabold text-slate-700 mb-1">{t('login')}</h2>
-          <p className="text-xs text-slate-400 mb-5">{t('login_subtitle')}</p>
+          <h2 className="text-lg font-extrabold text-slate-700 mb-0.5">{t('login')}</h2>
+          <p className="text-xs text-slate-400 mb-4">{t('login_subtitle')}</p>
 
           {error && (
-            <div className="mb-4 px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-xs text-red-500 font-medium">
+            <div className="mb-3 px-3 py-2 rounded-xl bg-red-50 border border-red-100 text-xs text-red-500 font-medium">
               {error}
             </div>
           )}
@@ -97,7 +99,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('email')}
                 required
-                className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
@@ -109,12 +111,12 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('password')}
                 required
-                className="w-full pl-11 pr-11 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full pl-11 pr-11 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <button
                 type="button"
                 onClick={() => setShowPass((s) => !s)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 text-sm"
               >
                 {showPass ? '🙈' : '👁️'}
               </button>
@@ -130,7 +132,7 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               whileTap={{ scale: 0.97 }}
-              className="w-full bg-primary text-white font-bold text-base rounded-full py-4 shadow-md shadow-primary/20 disabled:opacity-60"
+              className="w-full bg-primary text-white font-bold text-sm rounded-full py-3 shadow-sm disabled:opacity-60"
             >
               {loading ? t('signing_in') : t('login')}
             </motion.button>
@@ -147,20 +149,21 @@ export default function LoginPage() {
             onClick={handleGoogleLogin}
             disabled={loading}
             whileTap={{ scale: 0.97 }}
-            className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3.5 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full bg-white border border-slate-200 text-slate-700 font-semibold text-sm rounded-full py-3 shadow-sm flex items-center justify-center gap-2 disabled:opacity-60"
           >
-            <GoogleIcon size={20} />
+            <GoogleIcon size={18} />
             {t('continue_google')}
           </motion.button>
 
-          <p className="text-center text-sm text-slate-400 mt-5">
+          <p className="text-center text-sm text-slate-400 mt-4">
             {t('no_account')}{' '}
             <Link href="/signup" className="text-primary font-bold">
               {t('sign_up')}
             </Link>
           </p>
 
-          <div className="flex gap-3 mt-6 pt-4 border-t border-slate-100">
+          {/* Feature preview cards */}
+          <div className="flex gap-3 mt-5 pt-4 border-t border-slate-100">
             {[
               { icon: '📋', title: t('home_feature_routine'), desc: t('home_feature_routine_desc') },
               { icon: '⭐', title: t('home_feature_habits'), desc: t('home_feature_habits_desc') },
@@ -191,7 +194,7 @@ function friendlyError(code: string): string {
   }
   if (code.includes('too-many-requests')) return 'Too many attempts. Please try again later.';
   if (code.includes('network-request-failed')) return 'Network error. Check your connection.';
-  if (code.includes('unauthorized-domain')) return 'Login blocked: this domain is not authorized in Firebase. Add it to Firebase Console > Authentication > Authorized Domains.';
+  if (code.includes('unauthorized-domain')) return 'Login blocked: this domain is not authorized in Firebase.';
   if (code.includes('popup-closed-by-user') || code.includes('cancelled-popup-request')) return '';
   if (code.includes('operation-not-allowed')) return 'This login method is not enabled. Please enable it in Firebase Console.';
   return 'Login failed. Please try again.';

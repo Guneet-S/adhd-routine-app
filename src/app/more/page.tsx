@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/firebase';
@@ -11,6 +10,32 @@ import AddTaskModal from '@/components/modals/AddTaskModal';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { addTask as fsAddTask, getTasks, getUserProfile, Task, UserProfile } from '@/lib/firestore';
+
+interface MenuItemProps {
+  icon: string;
+  label: string;
+  onClick?: () => void;
+  href?: string;
+  danger?: boolean;
+  right?: React.ReactNode;
+}
+
+function MenuItem({ icon, label, onClick, danger, right }: MenuItemProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border ${
+        danger ? 'border-red-100' : 'border-slate-100'
+      } min-h-[52px]`}
+    >
+      <span className="text-xl w-7 text-center shrink-0">{icon}</span>
+      <span className={`flex-1 text-sm font-semibold text-left ${danger ? 'text-red-500' : 'text-slate-700'}`}>
+        {label}
+      </span>
+      {right ?? <span className="text-slate-300 text-sm">→</span>}
+    </button>
+  );
+}
 
 export default function MorePage() {
   const router = useRouter();
@@ -44,34 +69,48 @@ export default function MorePage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-50">
-        <div className="bg-white px-4 pt-5 pb-3">
+        <div className="bg-white px-4 pt-5 pb-3 border-b border-slate-100">
           <h1 className="text-lg font-extrabold text-slate-700">{t('more_title')}</h1>
         </div>
 
         <div className="px-4 pt-4 pb-28 space-y-3">
-          {/* Profile Card */}
-          {profile && (
-            <div className="bg-white rounded-2xl px-4 py-4 shadow-sm border border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl shrink-0">
-                  🧒
+
+          {/* Child Profile — Fix 3 */}
+          <div className="bg-white rounded-2xl px-4 py-4 shadow-sm border border-slate-100">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">{t('child_profile')}</p>
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-3xl shrink-0">
+                🧒
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-extrabold text-slate-700 truncate">
+                  {profile?.childName || '—'}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {profile?.childAge ? `Age ${profile.childAge}` : ''}
+                  {profile?.childAge && profile?.parentName ? ' · ' : ''}
+                  {profile?.parentName || ''}
+                </p>
+                {profile?.wakeUpTime && (
+                  <p className="text-xs text-primary font-medium mt-0.5">⏰ {profile.wakeUpTime}</p>
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm">⭐</span>
+                  <span className="text-sm font-bold text-slate-700">{profile?.totalStars ?? 0}</span>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-extrabold text-slate-700 truncate">{profile.childName || '—'}</p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {profile.childAge ? `Age ${profile.childAge}` : ''}{profile.childAge && profile.parentName ? ' · ' : ''}{profile.parentName}
-                  </p>
-                  {profile.wakeUpTime && (
-                    <p className="text-xs text-primary font-medium">⏰ Wake-up: {profile.wakeUpTime}</p>
-                  )}
+                <div className="flex items-center gap-1">
+                  <span className="text-sm">🔥</span>
+                  <span className="text-sm font-bold text-slate-700">{profile?.streak ?? 0}</span>
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Language Toggle */}
+          {/* Language Toggle — Fix 3 */}
           <div className="bg-white rounded-2xl px-4 py-4 shadow-sm border border-slate-100">
-            <p className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-wide">Language</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Language</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setLanguage('english')}
@@ -96,32 +135,46 @@ export default function MorePage() {
             </div>
           </div>
 
-          {/* Navigation links */}
-          <Link
-            href="/routine"
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-slate-100"
-          >
-            <span className="text-xl">📋</span>
-            <span className="text-sm font-semibold text-slate-700">{t('more_routine_builder')}</span>
-            <span className="ml-auto text-slate-400">→</span>
-          </Link>
+          {/* Menu items — Fix 3 */}
+          <MenuItem
+            icon="🔔"
+            label={t('notifications')}
+            onClick={() => {}}
+          />
+          <MenuItem
+            icon="⚙️"
+            label={t('parent_settings')}
+            onClick={() => {}}
+          />
+          <MenuItem
+            icon="📋"
+            label={t('more_routine_builder')}
+            onClick={() => router.push('/routine')}
+          />
+          <MenuItem
+            icon="🏆"
+            label={t('rewards_title')}
+            onClick={() => router.push('/rewards')}
+          />
+          <MenuItem
+            icon="❓"
+            label={t('help')}
+            onClick={() => {}}
+          />
+          <MenuItem
+            icon="🧠"
+            label={t('about_adhd')}
+            onClick={() => {}}
+          />
 
-          <Link
-            href="/rewards"
-            className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-slate-100"
-          >
-            <span className="text-xl">🏆</span>
-            <span className="text-sm font-semibold text-slate-700">{t('rewards_title')}</span>
-            <span className="ml-auto text-slate-400">→</span>
-          </Link>
-
-          <button
+          {/* Sign Out */}
+          <MenuItem
+            icon="🚪"
+            label={t('sign_out')}
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 shadow-sm border border-red-100 text-red-500"
-          >
-            <span className="text-xl">🚪</span>
-            <span className="text-sm font-semibold">{t('sign_out')}</span>
-          </button>
+            danger
+            right={<span />}
+          />
         </div>
 
         <BottomNav onAddTask={() => setAddOpen(true)} />

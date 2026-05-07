@@ -91,50 +91,43 @@ export async function createUserProfile(
 // ---- Default Tasks ----
 
 export async function createDefaultTasks(uid: string, childAge: number) {
-  let tasks: Array<Omit<Task, 'id'>> = [];
+  // Base tasks for all ages
+  const baseTasks: Array<Omit<Task, 'id'>> = [
+    { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
+    { title: 'Drink Water', emoji: '💧', category: 'morning', order: 2, completedDate: null },
+    { title: 'Breakfast', emoji: '🥣', category: 'morning', order: 3, completedDate: null },
+    { title: 'Homework', emoji: '📚', category: 'study', order: 1, completedDate: null },
+    { title: 'Reading', emoji: '📖', category: 'study', order: 2, completedDate: null },
+    { title: 'Prepare Clothes', emoji: '👕', category: 'evening', order: 1, completedDate: null },
+    { title: 'Brush Teeth', emoji: '🪥', category: 'evening', order: 2, completedDate: null },
+    { title: 'Sleep', emoji: '😴', category: 'evening', order: 3, completedDate: null },
+  ];
 
+  // Age-specific additional tasks
+  let ageTasks: Array<Omit<Task, 'id'>> = [];
   if (childAge <= 2) {
-    tasks = [
-      { title: 'Wash Hands', emoji: '🙌', category: 'morning', order: 1, completedDate: null },
-      { title: 'Drink Water', emoji: '💧', category: 'morning', order: 2, completedDate: null },
-      { title: 'Wear Clothes', emoji: '👕', category: 'morning', order: 3, completedDate: null },
-      { title: 'Drink Milk', emoji: '🥛', category: 'morning', order: 4, completedDate: null },
-      { title: 'Rest Time', emoji: '😴', category: 'evening', order: 1, completedDate: null },
-      { title: 'Story Time', emoji: '📖', category: 'evening', order: 2, completedDate: null },
+    ageTasks = [
+      { title: 'Wash Hands', emoji: '🙌', category: 'morning', order: 4, completedDate: null },
+      { title: 'Drink Milk', emoji: '🥛', category: 'morning', order: 5, completedDate: null },
+      { title: 'Story Time', emoji: '📖', category: 'evening', order: 4, completedDate: null },
     ];
   } else if (childAge >= 3 && childAge <= 5) {
-    tasks = [
-      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
-      { title: 'Wash Face', emoji: '🚿', category: 'morning', order: 2, completedDate: null },
-      { title: 'Drink Milk', emoji: '🥛', category: 'morning', order: 3, completedDate: null },
-      { title: 'Wear Clothes', emoji: '👕', category: 'morning', order: 4, completedDate: null },
+    ageTasks = [
+      { title: 'Wash Face', emoji: '🚿', category: 'morning', order: 4, completedDate: null },
+      { title: 'Wear Clothes', emoji: '👗', category: 'morning', order: 5, completedDate: null },
     ];
   } else if (childAge >= 6 && childAge <= 9) {
-    tasks = [
-      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
-      { title: 'Pack School Bag', emoji: '🎒', category: 'morning', order: 2, completedDate: null },
-      { title: 'Homework', emoji: '📚', category: 'study', order: 1, completedDate: null },
-      { title: 'Reading', emoji: '📖', category: 'study', order: 2, completedDate: null },
-      { title: 'Sleep on Time', emoji: '😴', category: 'evening', order: 1, completedDate: null },
+    ageTasks = [
+      { title: 'Pack School Bag', emoji: '🎒', category: 'morning', order: 4, completedDate: null },
     ];
-  } else if (childAge >= 10 && childAge <= 13) {
-    tasks = [
-      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
-      { title: 'Pack School Bag', emoji: '🎒', category: 'morning', order: 2, completedDate: null },
-      { title: 'Revision', emoji: '📝', category: 'study', order: 1, completedDate: null },
-      { title: 'Journaling', emoji: '📓', category: 'study', order: 2, completedDate: null },
-      { title: 'Sleep Preparation', emoji: '😴', category: 'evening', order: 1, completedDate: null },
-    ];
-  } else {
-    // Age 14+ or unknown: basic set
-    tasks = [
-      { title: 'Brush Teeth', emoji: '🪥', category: 'morning', order: 1, completedDate: null },
-      { title: 'Revision', emoji: '📝', category: 'study', order: 1, completedDate: null },
-      { title: 'Sleep on Time', emoji: '😴', category: 'evening', order: 1, completedDate: null },
+  } else if (childAge >= 10) {
+    ageTasks = [
+      { title: 'Pack School Bag', emoji: '🎒', category: 'morning', order: 4, completedDate: null },
+      { title: 'Revision', emoji: '📝', category: 'study', order: 3, completedDate: null },
     ];
   }
 
-  for (const task of tasks) {
+  for (const task of [...baseTasks, ...ageTasks]) {
     await addTask(uid, task);
   }
 }

@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import BottomNav from '@/components/layout/BottomNav';
 import ProgressRing from '@/components/ui/ProgressRing';
-import StatsCard from '@/components/ui/StatsCard';
 import TaskCategorySection from '@/components/tasks/TaskCategorySection';
 import AddTaskModal from '@/components/modals/AddTaskModal';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -23,14 +22,30 @@ import {
 } from '@/lib/firestore';
 import { CATEGORY_CONFIG } from '@/lib/mockData';
 
+const TIPS_EN = [
+  'Small steps count too!',
+  'Start with the easiest task first.',
+  "You're doing great — one task at a time.",
+  'Every task you finish is a win!',
+  'Take a deep breath — you can do this.',
+];
+const TIPS_PA = [
+  'ਛੋਟੇ ਕਦਮ ਵੀ ਮਾਇਨੇ ਰੱਖਦੇ ਹਨ!',
+  'ਸਭ ਤੋਂ ਆਸਾਨ ਕੰਮ ਤੋਂ ਸ਼ੁਰੂ ਕਰੋ।',
+  'ਤੁਸੀਂ ਵਧੀਆ ਕਰ ਰਹੇ ਹੋ — ਇੱਕ ਕੰਮ ਇੱਕ ਵਾਰ।',
+  'ਹਰ ਕੰਮ ਜੋ ਤੁਸੀਂ ਕਰਦੇ ਹੋ ਇੱਕ ਜਿੱਤ ਹੈ!',
+  'ਡੂੰਘਾ ਸਾਹ ਲਓ — ਤੁਸੀਂ ਇਹ ਕਰ ਸਕਦੇ ਹੋ।',
+];
+
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(true);
+  const [tipIndex] = useState(() => Math.floor(Math.random() * TIPS_EN.length));
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -73,92 +88,152 @@ export default function DashboardPage() {
   const totalCount = tasks.length;
   const starsToday = completedCount;
   const streak = profile?.streak ?? 0;
+  const totalStars = profile?.totalStars ?? 0;
   const childName = profile?.childName || '';
+
+  const incompleteTasks = tasks.filter((t) => !isCompletedToday(t));
+  const nextTask = incompleteTasks[0] ?? null;
 
   const tasksByCategory = (cat: Task['category']) =>
     tasks.filter((t) => t.category === cat).sort((a, b) => a.order - b.order);
+
+  const tip = language === 'punjabi' ? TIPS_PA[tipIndex] : TIPS_EN[tipIndex];
 
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-50">
         <Header childName={childName} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mx-4 mb-4 bg-amber-50 rounded-2xl p-4 flex items-center gap-3 border border-amber-100"
-        >
-          <div className="flex-1">
-            <p className="text-sm font-bold text-slate-700 leading-snug">
-              {t('dashboard_cheer')}{childName ? `, ${childName}` : ''}! ☀️
-            </p>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {t('dashboard_amazing')}
-            </p>
-          </div>
-          <div className="text-4xl">🏔️🌈</div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mx-4 mb-4 grid grid-cols-4 gap-2"
-        >
-          <StatsCard
-            icon={<ProgressRing value={completedCount} max={totalCount || 1} size={48} />}
-            value=""
-            label={t('dashboard_done')}
-          />
-          <StatsCard icon="⭐" value={starsToday} label={t('dashboard_stars_today')} />
-          <StatsCard icon="🔥" value={streak} label={t('dashboard_streak')} />
-          <StatsCard
-            icon="🏆"
-            value=""
-            label={t('dashboard_rewards')}
-            action={
-              <button
-                onClick={() => router.push('/rewards')}
-                className="text-[9px] font-bold text-primary border border-primary rounded-full px-2 py-0.5"
-              >
-                {t('view')}
-              </button>
-            }
-          />
-        </motion.div>
-
-        <div className="mx-4 pb-28">
+        <div className="pb-28">
           {loadingTasks ? (
-            <div className="flex justify-center py-12 text-3xl animate-pulse">⭐</div>
-          ) : tasks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="text-5xl mb-4">📋</div>
-              <p className="text-sm font-bold text-slate-600 mb-1">No tasks yet!</p>
-              <p className="text-xs text-slate-400">Tap + below to add your first task</p>
-            </div>
+            <div className="flex justify-center py-20 text-3xl animate-pulse">⭐</div>
           ) : (
-            (['morning', 'study', 'evening'] as const).map((cat, i) => {
-              const config = CATEGORY_CONFIG[cat];
-              const catTasks = tasksByCategory(cat);
-              return (
+            <>
+              {/* FIX 9 — Section 1: Today's Progress */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="mx-4 mt-3 mb-3 bg-white rounded-2xl p-4 shadow-sm border border-slate-100"
+              >
+                <div className="flex items-center gap-4">
+                  <ProgressRing value={completedCount} max={totalCount || 1} size={64} />
+                  <div className="flex-1">
+                    <p className="text-base font-extrabold text-slate-700">
+                      {completedCount}/{totalCount} {t('dashboard_done')}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-0.5">{t('dashboard_amazing')}</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xl">🔥</span>
+                    <span className="text-sm font-bold text-slate-700">{streak}</span>
+                    <span className="text-[9px] text-slate-400">{t('dashboard_streak')}</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* ADHD Tip — Fix 8 */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="mx-4 mb-3"
+              >
+                <p className="text-xs text-primary/80 font-semibold text-center bg-violet-50 rounded-xl px-3 py-2">
+                  💡 {tip}
+                </p>
+              </motion.div>
+
+              {/* Up Next — Fix 9 Section 3 */}
+              {nextTask && (
                 <motion.div
-                  key={cat}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 + i * 0.08 }}
+                  transition={{ delay: 0.12 }}
+                  className="mx-4 mb-3 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-3 flex items-center gap-3"
                 >
-                  <TaskCategorySection
-                    title={config.label}
-                    emoji={config.emoji}
-                    tasks={catTasks.map((t) => ({ ...t, completed: isCompletedToday(t) }))}
-                    bg={config.bg}
-                    iconBg={config.iconBg}
-                    onToggle={handleToggle}
-                  />
+                  <div className="w-9 h-9 rounded-xl bg-amber-200 flex items-center justify-center text-lg shrink-0">
+                    {nextTask.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide">{t('next_task')}</p>
+                    <p className="text-sm font-bold text-slate-700 truncate">{nextTask.title}</p>
+                  </div>
+                  <span className="text-amber-400 text-lg">→</span>
                 </motion.div>
-              );
-            })
+              )}
+
+              {/* Reset Moment Card — Fix 7 */}
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="mx-4 mb-4 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 flex items-center gap-3"
+              >
+                <span className="text-2xl shrink-0">🫁</span>
+                <div>
+                  <p className="text-xs font-bold text-blue-700">{t('adhd_reset_title')}</p>
+                  <p className="text-xs text-blue-500">{t('adhd_reset_desc')}</p>
+                </div>
+              </motion.div>
+
+              {/* FIX 9 — Section 2: Current Routine (task lists) */}
+              <div className="mx-4 space-y-3">
+                {tasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="text-5xl mb-4">📋</div>
+                    <p className="text-sm font-bold text-slate-600 mb-1">No tasks yet!</p>
+                    <p className="text-xs text-slate-400">Tap + below to add your first task</p>
+                  </div>
+                ) : (
+                  (['morning', 'study', 'evening'] as const).map((cat, i) => {
+                    const config = CATEGORY_CONFIG[cat];
+                    const catTasks = tasksByCategory(cat);
+                    if (catTasks.length === 0) return null;
+                    return (
+                      <motion.div
+                        key={cat}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + i * 0.06 }}
+                      >
+                        <TaskCategorySection
+                          title={config.label}
+                          emoji={config.emoji}
+                          tasks={catTasks.map((t) => ({ ...t, completed: isCompletedToday(t) }))}
+                          bg={config.bg}
+                          iconBg={config.iconBg}
+                          onToggle={handleToggle}
+                        />
+                      </motion.div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* FIX 9 — Section 4: Rewards Summary */}
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="mx-4 mt-4 bg-primary rounded-2xl px-4 py-3 flex items-center gap-4 shadow-md shadow-primary/15"
+              >
+                <span className="text-3xl">🏆</span>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-violet-200">{t('rewards_summary')}</p>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <span className="text-sm font-extrabold text-white">⭐ {totalStars}</span>
+                    <span className="text-sm font-extrabold text-white">🔥 {streak}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => router.push('/rewards')}
+                  className="text-[10px] font-bold text-violet-200 border border-violet-300 rounded-full px-3 py-1 shrink-0"
+                >
+                  {t('view')}
+                </button>
+              </motion.div>
+            </>
           )}
         </div>
 

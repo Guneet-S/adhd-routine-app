@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/layout/BottomNav';
+import ChevronLeft from '@/components/icons/ChevronLeft';
 import AddTaskModal from '@/components/modals/AddTaskModal';
 import EditTaskModal from '@/components/modals/EditTaskModal';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -26,6 +27,7 @@ function toUiTask(t: FsTask): Task {
 export default function RoutinePage() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
@@ -77,10 +79,15 @@ export default function RoutinePage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-50">
-        <div className="bg-white px-4 pt-5 pb-3 flex items-center gap-3">
-          <Link href="/dashboard" className="text-slate-400 text-lg">←</Link>
+        <header className="sticky top-0 z-10 bg-white flex items-center gap-3 px-4 py-3 border-b border-slate-100 shadow-sm">
+          <button
+            onClick={() => router.back()}
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-100 shrink-0"
+          >
+            <ChevronLeft size={18} />
+          </button>
           <h1 className="text-lg font-extrabold text-slate-700">{t('routine_title')}</h1>
-        </div>
+        </header>
 
         <div className="px-4 pb-28 pt-4 space-y-6">
           {loading ? (

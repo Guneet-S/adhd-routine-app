@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import BottomNav from '@/components/layout/BottomNav';
 import AddTaskModal from '@/components/modals/AddTaskModal';
 import AuthGuard from '@/components/auth/AuthGuard';
-import Link from 'next/link';
+import ChevronLeft from '@/components/icons/ChevronLeft';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { getTasks, getUserProfile, isCompletedToday, addTask as fsAddTask, Task, UserProfile } from '@/lib/firestore';
@@ -13,6 +14,7 @@ import { getTasks, getUserProfile, isCompletedToday, addTask as fsAddTask, Task,
 export default function RewardsPage() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [addOpen, setAddOpen] = useState(false);
@@ -87,10 +89,15 @@ export default function RewardsPage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-slate-50">
-        <div className="bg-white px-4 pt-5 pb-3 flex items-center gap-3">
-          <Link href="/dashboard" className="text-slate-400 text-lg">←</Link>
+        <header className="sticky top-0 z-10 bg-white flex items-center gap-3 px-4 py-3 border-b border-slate-100 shadow-sm">
+          <button
+            onClick={() => router.back()}
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm border border-slate-100 shrink-0"
+          >
+            <ChevronLeft size={18} />
+          </button>
           <h1 className="text-lg font-extrabold text-slate-700">{t('rewards_title')} ⭐</h1>
-        </div>
+        </header>
 
         <div className="px-4 pb-28 pt-4">
           {/* Stars summary */}

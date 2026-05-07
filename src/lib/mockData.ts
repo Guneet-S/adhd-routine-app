@@ -41,8 +41,8 @@ export const CATEGORY_CONFIG = {
     iconBg: 'bg-amber-200',
   },
   study: {
-    label: 'Study Time',
-    emoji: '📖',
+    label: 'Afternoon Routine',
+    emoji: '⛅',
     time: '3:30 - 5:00',
     bg: 'bg-study',
     accent: 'bg-study-accent',
